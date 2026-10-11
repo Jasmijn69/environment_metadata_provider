@@ -30,3 +30,10 @@ The trade-off is that the snapshot is stale by design: if the process re-exec()s
 - `boot_time` is interpreted as the current *process's* start time (epoch seconds), not the OS boot time — because that is the value that is actually useful when correlating service logs. It is derived as `now - elapsed` from `os.times().elapsed` where available, falling back to `time.process_time()`. It is approximate; do not treat it as sub-second precise.
 - `socket.gethostname()` can raise or return an empty string in stripped-down containers (e.g. a freshly unshared UTS namespace). In that case the hostname field becomes the sentinel string `<unknown-host>` rather than an empty value that would silently corrupt log records.
 - The snapshot is a `MappingProxyType`: mutation attempts raise `TypeError` on assignment and `AttributeError` on deletion.
+
+## Performance
+
+The window keeps a bounded buffer, so `push` is constant time and memory does not
+grow with the length of the stream. `peak` and `trough` are linear in the window
+size, which is the trade that keeps `push` cheap.
+
